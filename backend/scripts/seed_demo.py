@@ -6,6 +6,7 @@ from src.models import *
 from src.utils.security import hash_password
 from src.services.snapshots import get_utterances
 from src.services.comparison import compare_snapshots
+from src.services.plans import add_initial_version
 from src.constants.features import FEATURES
 
 def seed():
@@ -29,6 +30,7 @@ def seed():
    run=ComparisonRun(name='十一月采集分布初校',reference_id=ref.id,candidate_id=cand.id,config=config,status='succeeded',result={k:v for k,v in result.items() if k!='findings'},creator_id=admin.id);db.add(run);db.flush()
    for f in result['findings']:db.add(DriftFinding(run_id=run.id,**f))
    db.flush();ids=list(db.scalars(select(DriftFinding.id).where(DriftFinding.run_id==run.id,DriftFinding.status=='review')))
-   db.add(ResamplingPlan(name='移动设备与短片段补采草案',run_id=run.id,finding_ids=ids or list(db.scalars(select(DriftFinding.id).where(DriftFinding.run_id==run.id).limit(1))),target_slice='studio / 长时片段覆盖复核',sample_target=200,rationale='先核对来源和采样口径，再讨论补采，漂移不等于模型质量下降。',creator_id=admin.id));db.add(AuditLog(actor='seed',action='demo.created',detail={'seed':113,'utterances':1800}));db.commit()
+   plan=ResamplingPlan(name='移动设备与短片段补采草案',run_id=run.id,finding_ids=ids or list(db.scalars(select(DriftFinding.id).where(DriftFinding.run_id==run.id).limit(1))),target_slice='studio / 长时片段覆盖复核',sample_target=200,rationale='先核对来源和采样口径，再讨论补采，漂移不等于模型质量下降。',creator_id=admin.id)
+   db.add(plan);add_initial_version(db,plan);db.add(AuditLog(actor='seed',action='demo.created',detail={'seed':113,'utterances':1800}));db.commit()
   counts={t.__tablename__:db.scalar(select(func.count()).select_from(t)) for t in [User,CorpusSnapshot,Utterance,ComparisonRun,DriftFinding,ResamplingPlan]};print(json.dumps(counts));return counts
 if __name__=='__main__':seed()

@@ -7,6 +7,14 @@ class PlanInput(BaseModel):
  target_slice:str=Field(min_length=1,max_length=160)
  sample_target:int=Field(ge=20,le=10000)
  rationale:str=Field(min_length=1,max_length=500)
+class PlanRevisionInput(BaseModel):
+ version:int=Field(gt=0)
+ name:str=Field(min_length=1,max_length=100)
+ finding_ids:list[int]=Field(min_length=1,max_length=5)
+ target_slice:str=Field(min_length=1,max_length=160)
+ sample_target:int=Field(ge=20,le=10000)
+ rationale:str=Field(min_length=1,max_length=500)
 class ApprovalInput(BaseModel):
+ version:int=Field(gt=0)
  status:Literal['approved','rejected']
  review_note:str=Field(min_length=1,max_length=500)

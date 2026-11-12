@@ -30,7 +30,7 @@ docker compose exec -T backend python -m scripts.seed_demo
 5. worker只用参考非缺失值拟合分位边界与参考类别字典，再将候选投影到冻结箱。
 6. 看PSI/JS效应量、连续KS原p/BH q及FDR拒绝；打开language看到__NEW__和__MISSING__独立计数。
 7. 从当前发现建立“来源结构补采说明”，填写切片、目标200片段和采集理由。
-8. 叶砚以admin审稿，说明先核对来源再补采，后续质量变化须独立评测。
+8. 叶砚以admin审稿，说明先核对来源再补采，后续质量变化须独立评测；若计划被退回，梁栩可在同一计划上修订并生成新版本，旧版理由与审核意见仍保留在版本记录中。
 9. 唐禾以viewer导出获批CSV，保留发现指标、校正q与审稿说明；不将漂移直接表述为质量劣化。
 
 ## 数据、分箱与统计口径
@@ -79,6 +79,10 @@ npm run dev
 ```
 
 结构：backend/src/{routes,controllers,services,models,schemas,middlewares,utils,constants,config}；backend/scripts/seed_demo.py；backend/migrations/；frontend/src/{api,stores,types,components/common,hooks,pages,router,utils,constants}。metadata首次建表，migrations说明结构，生产增量升级需另行规划。快照名/片段自然键/基准运行名让seed可重复且不覆盖用户修改；基准仅缺失时计算。请求ID和全局错误两个中间件；AuditLog记录登录、导入、任务和审稿；CSV公式前缀转义。
+
+## 补采计划的版本与审稿
+
+补采计划是可修订的稿件，`ResamplingPlanVersion` 逐版保存名称、关联发现、切片、目标量、依据、状态、审核意见与审核人；改稿只新增版本，不覆盖旧内容。草案和退回计划可改，保存后回到待审稿并需重新审核；退回是那一版的最终决定，同一版本不能被改判同意，获批版本冻结、不能修订或再审，需要改动时另建计划。改稿与审核请求必须带 `version`，后端以 `WHERE current_version=:version AND status=…` 的条件更新原子校验：过期操作返回 409 并写明本次基于哪版、当前是哪版，旧版同意不能批准新版。获批计划在页面与导出中都读取 `approved_version` 指向的那一版，导出还使用该版审核时保存的发现指标快照，避免后续数据变化影响交付内容。升级旧库时 `src/config/migrate.py` 补列、`backfill_versions` 为存量计划补 v1，既有获批计划保持可导出。回归用例见 `backend/tests/test_plan_versions.py` 与 `backend/tests/test_upgrade_path.py`。
 
 共享枚举位置：后端backend/src/constants/enums.py的Role/RunStatus/PlanStatus/FindingStatus；前端frontend/src/constants/enums.ts对应角色/运行/计划/发现标签；使用于鉴权、运行/计划服务、schema和Badge/Layout/各页面。测试脚本、真实截图、CSV、日志、报告仅位于批次根test-artifacts/gb-0011，源码不含截图/测试报告。真机测试、oracle和已知差异见该目录TESTING.md。
 

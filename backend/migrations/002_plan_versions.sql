@@ -1,0 +1,32 @@
+-- Plan revision history. Existing plans are backfilled into v1 at startup
+-- (src.services.plans.backfill_versions), and approved plans keep exporting.
+--
+-- SQLAlchemy metadata creates resampling_plan_versions at first boot. For an
+-- already running database apply the following equivalent DDL:
+--
+-- ALTER TABLE resampling_plans
+--   ADD COLUMN current_version INT NOT NULL DEFAULT 1,
+--   ADD COLUMN approved_version INT NULL,
+--   ADD COLUMN reviewer_id INT NULL,
+--   ADD COLUMN reviewed_at DATETIME NULL,
+--   ADD COLUMN updated_at DATETIME NULL,
+--   ADD CONSTRAINT fk_plans_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(id);
+--
+-- CREATE TABLE resampling_plan_versions (
+--   id INT AUTO_INCREMENT PRIMARY KEY,
+--   plan_id INT NOT NULL,
+--   version INT NOT NULL,
+--   name VARCHAR(100) NOT NULL,
+--   finding_ids JSON NOT NULL,
+--   target_slice VARCHAR(160) NOT NULL,
+--   sample_target INT NOT NULL,
+--   rationale VARCHAR(500) NOT NULL,
+--   status VARCHAR(20) NOT NULL DEFAULT 'draft',
+--   review_note VARCHAR(500) NOT NULL DEFAULT '',
+--   finding_snapshot JSON NULL,
+--   reviewer_id INT NULL,
+--   reviewed_at DATETIME NULL,
+--   created_by INT NOT NULL,
+--   created_at DATETIME NOT NULL,
+--   CONSTRAINT uq_plan_versions UNIQUE (plan_id, version)
+-- );
